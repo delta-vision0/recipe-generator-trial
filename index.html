@@ -3,229 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Generator</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Vision Recipe Generator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Custom CSS for animations and print styles -->
+    <!-- Google Fonts: Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f8fafc; /* A very clean, light gray */
+        }
+
+        /* --- Animations --- */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(1rem); }
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        /* --- CORRECTED PRINT STYLES --- */
+        /* --- Custom Dropdown Styles --- */
+        .custom-select-option:hover {
+            background-color: #f0fdfa; /* A very light teal for hover */
+        }
+
+        /* --- ATTRACTIVE PRINT STYLES --- */
         @media print {
-            /* Hide the sections we don't want to print by their ID */
-            #header-section, #input-section {
-                display: none;
-            }
-
-            /* Hide the action buttons inside the recipe card */
-            #action-buttons {
-                display: none;
-            }
-
-            /* Ensure the recipe card takes up the full width and has no shadow or border */
-            #recipe-card {
+            body { background: white !important; }
+            #main-card > div:not(#recipe-result-container), footer, #header-section, #back-to-form-btn, #action-buttons, #follow-up-section { display: none !important; }
+            #app-container { padding: 0 !important; }
+            #main-card {
                 box-shadow: none !important;
                 border: none !important;
-                margin: 0 !important;
                 padding: 0 !important;
-                width: 100%;
             }
-
-            /* Make sure text is black for printing */
-            h2, h3, p, li {
-                color: black !important;
+            #recipe-card h2 {
+                font-size: 24pt !important;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 24px;
+            }
+            #recipe-card p {
+                text-align: center;
+                font-style: italic;
+                 margin-bottom: 24px;
+            }
+             #recipe-card h3 {
+                font-size: 16pt !important;
+                font-weight: bold;
+                border-bottom: 2px solid #ccc !important;
+                padding-bottom: 8px;
+                margin-bottom: 16px;
+            }
+            #recipe-card ul, #recipe-card ol {
+                font-size: 12pt;
             }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="font-sans text-gray-800 flex flex-col items-center p-4 sm:p-6 md:p-8">
-        <div class="w-full max-w-3xl mx-auto">
-            <!-- Header Section with ID for printing -->
-            <header id="header-section" class="text-center mb-8">
-                <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M12 2a5 5 0 1 0 5 5 5 5 0 0 0-5-5Z"/><path d="M12 10c-2 0-5 2-5 5v2h10v-2c0-3-3-5-5-5Z"/><path d="M20.59 13.41c.39.39.39 1.02 0 1.41l-2.59 2.59c-.39.39-1.02.39-1.41 0a1.01 1.01 0 0 1 0-1.41l2.59-2.59c.39-.39 1.02-.39 1.41 0Z"/><path d="m14 13-1-1"/><path d="m12 15-1-1"/></svg>
-                    Recipe Generator
-                </h1>
-                <p class="text-lg text-gray-600">What do you have in your kitchen? Let's cook something up!</p>
-            </header>
-
-            <!-- Input Section with ID for printing -->
-            <div id="input-section" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
-                <div class="flex flex-col gap-4">
-                    <label for="ingredients-input" class="font-semibold text-gray-700">Enter your ingredients (comma separated):</label>
-                    <textarea
-                        id="ingredients-input"
-                        placeholder="e.g., chicken breast, garlic, tomatoes, olive oil"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200 resize-none"
-                        rows="4"
-                    ></textarea>
-                    <button
-                        id="generate-btn"
-                        class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        Generate Recipe
-                    </button>
-                </div>
+    <div id="app-container" class="w-full max-w-lg">
+        <!-- Header Section -->
+        <header id="header-section" class="text-center mb-8 animate-fade-in">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h1 class="text-4xl font-bold text-gray-800">Recipe Generator</h1>
             </div>
+            <p class="text-gray-500">What do you have in your kitchen? Let's cook something up!</p>
+        </header>
 
-            <!-- Status/Result Section -->
-            <div id="result-container" class="mt-8">
-                <!-- Recipe, error, or loading messages will be inserted here by JavaScript -->
+        <!-- Main Application Card -->
+        <main id="main-card" class="bg-white rounded-2xl shadow-lg transition-all duration-500 p-8 sm:p-10">
+            <!-- Dynamic content will be injected here -->
+            <div id="dynamic-content-container">
+                <!-- Initial Form View -->
             </div>
-        </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center mt-8 text-gray-400 text-sm">
+            <p>&copy; 2025 Vision Recipe Generator. All rights reserved by Navanath Bhosale.</p>
+        </footer>
     </div>
 
     <script>
-        // --- DOM ELEMENT REFERENCES ---
-        const ingredientsInput = document.getElementById('ingredients-input');
-        const generateBtn = document.getElementById('generate-btn');
-        const resultContainer = document.getElementById('result-container');
-
-        // --- GLOBAL STATE ---
+        // --- DOM REFERENCES ---
+        const dynamicContentContainer = document.getElementById('dynamic-content-container');
         let currentRecipe = null;
+        let originalIngredients = '';
 
-        // --- API CALL LOGIC ---
-        async function generateRecipe() {
-            const ingredients = ingredientsInput.value;
-            if (!ingredients.trim()) {
-                displayError('Please enter some ingredients.');
-                return;
+        // --- STATE & RENDERING LOGIC ---
+        const render = (state, data = null) => {
+            let html = '';
+            switch(state) {
+                case 'FORM': html = getFormHtml(); break;
+                case 'LOADING': html = getLoadingHtml(); break;
+                case 'RESULT': html = getResultHtml(data); break;
+                case 'ERROR': html = getErrorHtml(data); break;
             }
-            setLoadingState(true);
-            resultContainer.innerHTML = ''; 
+            dynamicContentContainer.innerHTML = html;
+            attachListeners(state);
+        };
 
-            const apiKey = "AIzaSyD6qeOpmXGSN_jsnDKScX76Qmln2sMtc58"; // WARNING: Insecure for public sites
+        // --- HTML TEMPLATES ---
+        const getFormHtml = () => `
+            <div class="animate-fade-in space-y-6">
+                <form id="recipe-form" class="space-y-6">
+                    <div>
+                        <label for="ingredients-input" class="block text-sm font-semibold text-gray-700 mb-2">Enter your ingredients (comma separated):</label>
+                        <textarea id="ingredients-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., chicken breast, garlic, tomatoes, olive oil"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Language</label>
+                        <div id="language-dropdown" class="relative">
+                            <input type="hidden" id="language-input" value="English">
+                            <button type="button" id="language-btn" class="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg>
+                                    <span id="language-selected" class="block truncate">English</span>
+                                </span>
+                                <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                </span>
+                            </button>
+                            <ul id="language-options" class="hidden absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                ${['English', 'Spanish', 'French', 'Hindi', 'Marathi'].map(lang => `<li class="custom-select-option text-gray-900 relative cursor-pointer select-none py-2 pl-4 pr-4" data-value="${lang}">${lang}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    <button id="generate-btn" type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-all transform hover:scale-105">
+                        Generate Recipe
+                    </button>
+                </form>
+            </div>`;
+
+        const getLoadingHtml = () => `
+            <div class="animate-fade-in text-center py-10">
+                 <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                 <h2 class="mt-6 text-xl font-bold text-gray-800">Generating your recipe...</h2>
+            </div>`;
+
+        const getResultHtml = (recipe) => {
+            const ingredientsHtml = recipe.ingredients.map(item => `<li class="flex items-start"><span class="mr-3 mt-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full"></span><span>${item}</span></li>`).join('');
+            const instructionsHtml = recipe.instructions.map((step, index) => `<li class="flex items-start"><span class="mr-3 font-bold text-emerald-600 text-lg">${index + 1}</span><p>${step}</p></li>`).join('');
+
+            return `
+                <div id="recipe-result-container" class="animate-fade-in">
+                    <div id="recipe-card">
+                        <h2 class="text-3xl font-extrabold text-gray-900 mb-2">${recipe.recipeName}</h2>
+                        <p class="text-gray-600 mb-8 italic">"${recipe.description}"</p>
+                        <div class="space-y-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Ingredients</h3>
+                                <ul class="space-y-2 text-gray-700">${ingredientsHtml}</ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Instructions</h3>
+                                <ol class="space-y-4 text-gray-700">${instructionsHtml}</ol>
+                            </div>
+                        </div>
+                        <div id="action-buttons" class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Print</button>
+                            <button id="share-btn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-teal-600 transition">Share</button>
+                        </div>
+                    </div>
+                    <!-- Follow-up Section -->
+                    <div id="follow-up-section" class="mt-10 pt-6 border-t-2 border-dashed">
+                         <h3 class="text-lg font-semibold text-gray-700 mb-2">Need a change?</h3>
+                         <p class="text-sm text-gray-500 mb-4">Ask for a modification, like "make it vegetarian" or "add a side dish."</p>
+                         <form id="follow-up-form" class="flex items-center gap-4">
+                            <input id="follow-up-input" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="Your query...">
+                            <button id="follow-up-btn" type="submit" class="bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-emerald-700 transition">Submit</button>
+                         </form>
+                    </div>
+                    <button id="back-to-form-btn" class="w-full mt-8 text-center text-sm font-semibold text-gray-500 hover:text-gray-900">Create Another Recipe</button>
+                </div>`;
+        };
+        
+        const getErrorHtml = (message) => `
+            <div class="animate-fade-in text-center">
+                <h2 class="text-2xl font-bold text-red-600 mb-2">Something Went Wrong</h2>
+                <p class="text-gray-600 mb-6">${message}</p>
+                <button id="back-to-form-btn" class="bg-gray-800 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Try Again</button>
+            </div>`;
+        
+        const attachListeners = (state) => {
+            if (state === 'FORM') {
+                document.getElementById('recipe-form').addEventListener('submit', (e) => handleApiCall(e));
+                const dropdownBtn = document.getElementById('language-btn');
+                const optionsPanel = document.getElementById('language-options');
+                dropdownBtn.addEventListener('click', () => optionsPanel.classList.toggle('hidden'));
+                optionsPanel.querySelectorAll('li').forEach(option => {
+                    option.addEventListener('click', () => {
+                        document.getElementById('language-selected').textContent = option.dataset.value;
+                        document.getElementById('language-input').value = option.dataset.value;
+                        optionsPanel.classList.add('hidden');
+                    });
+                });
+                document.addEventListener('click', (e) => {
+                    if (!document.getElementById('language-dropdown')?.contains(e.target)) {
+                        optionsPanel?.classList.add('hidden');
+                    }
+                }, true);
+            } else if (state === 'RESULT') {
+                document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
+                document.getElementById('print-btn').addEventListener('click', () => window.print());
+                document.getElementById('share-btn').addEventListener('click', handleShare);
+                document.getElementById('follow-up-form').addEventListener('submit', (e) => handleApiCall(e, true));
+            } else if (state === 'ERROR') {
+                document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
+            }
+        };
+
+        const handleApiCall = async (event, isFollowUp = false) => {
+            event.preventDefault();
+            
+            const selectedLanguage = document.getElementById('language-input').value;
+            let ingredients, userQuery;
+
+            if (isFollowUp) {
+                const followUpInput = document.getElementById('follow-up-input');
+                if (!followUpInput.value.trim()) {
+                    alert('Please enter a follow-up query.');
+                    return;
+                }
+                ingredients = originalIngredients;
+                userQuery = `Based on a previous recipe for "${currentRecipe.recipeName}" using ingredients like "${ingredients}", please generate a new recipe that incorporates this request: "${followUpInput.value}".`;
+            } else {
+                const ingredientsInput = document.getElementById('ingredients-input');
+                if (!ingredientsInput.value.trim()) {
+                    alert('Please enter some ingredients.');
+                    return;
+                }
+                ingredients = ingredientsInput.value;
+                originalIngredients = ingredients; // Save for follow-ups
+                userQuery = `Generate a recipe using these ingredients: ${ingredients}.`;
+            }
+
+            render('LOADING');
+
+            const apiKey = "AIzaSyD6qeOpmXGSN_jsnDKScX76Qmln2sMtc58"; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            const systemPrompt = `You are a creative chef. Your task is to generate a recipe based on user-provided ingredients. Your response MUST be a valid JSON object with the structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. Do not include any text outside this JSON object.`;
-            const userQuery = `Generate a recipe using: ${ingredients}`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: { responseMimeType: "application/json" }
-            };
-
-            let response;
-            let retries = 3;
-            let delay = 1000;
-            for (let i = 0; i < retries; i++) {
-                try {
-                    response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (response.ok) break;
-                } catch (e) { console.error("Fetch error:", e); }
-                if (i < retries - 1) { await new Promise(resolve => setTimeout(resolve, delay)); delay *= 2; }
-            }
-
-            setLoadingState(false);
-
-            if (!response || !response.ok) {
-                displayError('Failed to generate recipe. Please try again later.');
-                console.error("API request failed:", response ? await response.text() : "No response");
-                return;
-            }
+            const systemPrompt = `You are a recipe generation assistant. Your ONLY output must be a single, valid JSON object with this exact structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. All string values inside the JSON must be in ${selectedLanguage}. Do not include any text, markdown, or explanations.`;
 
             try {
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const recipeJson = JSON.parse(candidate.content.parts[0].text);
-                    currentRecipe = recipeJson; // Store for sharing
-                    displayRecipe(recipeJson);
-                } else {
-                    displayError('Could not parse the recipe from the response.');
-                    console.error('Unexpected API response structure:', result);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData || `Request failed with status ${response.status}`);
                 }
-            } catch (e) {
-                displayError('An error occurred while parsing the recipe.');
-                console.error('Error parsing JSON:', e);
+                
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error('Invalid response structure from API.');
+
+                const recipe = JSON.parse(text);
+                currentRecipe = recipe;
+                render('RESULT', recipe);
+            } catch (error) {
+                console.error('Error:', error);
+                render('ERROR', "Could not generate a recipe. The API key may be invalid or restricted. Please check the console for more details.");
             }
-        }
+        };
 
-        // --- UI HELPER FUNCTIONS ---
-        function setLoadingState(isLoading) {
-            generateBtn.disabled = isLoading;
-            generateBtn.innerHTML = isLoading ? `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg> Generating...` : 'Generate Recipe';
-        }
-
-        function displayError(message) {
-            resultContainer.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert"><strong class="font-bold">Oops! </strong><span class="block sm:inline">${message}</span></div>`;
-        }
-
-        function displayRecipe(recipe) {
-            const ingredientsHtml = recipe.ingredients.map(item => `<li>${item}</li>`).join('');
-            const instructionsHtml = recipe.instructions.map(step => `<li class="pl-2">${step}</li>`).join('');
-
-            resultContainer.innerHTML = `
-                <div id="recipe-card" class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 animate-fade-in">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">${recipe.recipeName}</h2>
-                    <p class="text-gray-600 mb-6 italic">"${recipe.description}"</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1">
-                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-400 pb-2">Ingredients</h3>
-                            <ul class="list-disc list-inside space-y-2 text-gray-700">${ingredientsHtml}</ul>
-                        </div>
-                        <div class="md-col-span-2">
-                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-400 pb-2">Instructions</h3>
-                            <ol class="list-decimal list-inside space-y-3 text-gray-700">${instructionsHtml}</ol>
-                        </div>
-                    </div>
-                    <!-- Action Buttons with ID for printing -->
-                    <div id="action-buttons" class="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <button onclick="handlePrint()" class="flex items-center justify-center gap-2 w-full sm:w-auto bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                            Print Recipe
-                        </button>
-                        <button onclick="handleShare()" class="flex items-center justify-center gap-2 w-full sm:w-auto bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="text-white"><path d="M16.6 14.2c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.6.7-.8.9-.1.1-.3.2-.5.1-.2-.1-.9-.3-1.8-1.1-.7-.6-1.1-1.4-1.3-1.6-.1-.2 0-.4.1-.5.1-.1.2-.2.4-.4.1-.1.2-.2.3-.4.1-.2 0-.3-.1-.4-.1-.1-.6-.7-1-1.6-.2-.4-.4-.5-.6-.5h-.5c-.2 0-.5.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2 1 2.4.1.1 1.5.7 3.5 2.6 2 1.8 2 1.3 2.4 1.2.4-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.3-.5zM12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"></path></svg>
-                            Share to WhatsApp
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // --- ACTION HANDLERS ---
-        function handlePrint() {
-            window.print();
-        }
-
-        function handleShare() {
+        const handleShare = () => {
             if (!currentRecipe) return;
-
-            // Format recipe into a plain text string for sharing
-            let shareText = `*${currentRecipe.recipeName}*\n\n`;
-            shareText += `_${currentRecipe.description}_\n\n`;
-            shareText += '*Ingredients:*\n';
-            currentRecipe.ingredients.forEach(item => {
-                shareText += `- ${item}\n`;
-            });
+            let shareText = `*${currentRecipe.recipeName}*\n\n_${currentRecipe.description}_\n\n*Ingredients:*\n`;
+            currentRecipe.ingredients.forEach(item => { shareText += `- ${item}\n`; });
             shareText += '\n*Instructions:*\n';
-            currentRecipe.instructions.forEach((step, index) => {
-                shareText += `${index + 1}. ${step}\n`;
-            });
+            currentRecipe.instructions.forEach((step, index) => { shareText += `${index + 1}. ${step}\n`; });
+            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+        };
 
-            // Encode for URL and open WhatsApp
-            const encodedText = encodeURIComponent(shareText);
-            const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-            window.open(whatsappUrl, '_blank');
-        }
-
-        // --- EVENT LISTENERS ---
-        generateBtn.addEventListener('click', generateRecipe);
-
+        document.addEventListener('DOMContentLoaded', () => render('FORM'));
     </script>
 </body>
 </html>
+
