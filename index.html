@@ -31,36 +31,71 @@
             background-color: #f0fdfa; /* A very light teal for hover */
         }
 
-        /* --- ATTRACTIVE PRINT STYLES --- */
+        /* --- PROFESSIONAL & ATTRACTIVE PRINT STYLES --- */
         @media print {
-            body { background: white !important; }
-            #main-card > div:not(#recipe-result-container), footer, #header-section, #back-to-form-btn, #action-buttons, #follow-up-section { display: none !important; }
-            #app-container { padding: 0 !important; }
-            #main-card {
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0 !important;
+            /* Hide all non-essential elements */
+            body > #app-container > header, 
+            body > #app-container > footer, 
+            #back-to-form-btn, 
+            #action-buttons, 
+            #follow-up-section {
+                display: none !important;
             }
+            
+            /* Reset styles for a clean document look */
+            body, #app-container, #main-card, #dynamic-content-container, #recipe-result-container {
+                all: initial;
+                display: block;
+                background: white !important;
+                color: black !important;
+                font-family: 'Times New Roman', Times, serif; /* Classic font for recipes */
+            }
+
+            #recipe-card {
+                padding: 0.75in; /* Standard print margin */
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            /* Recipe Title */
             #recipe-card h2 {
-                font-size: 24pt !important;
+                font-size: 26pt !important;
                 font-weight: bold;
                 text-align: center;
-                margin-bottom: 24px;
+                margin-bottom: 0.25in;
+                color: black !important;
             }
-            #recipe-card p {
+
+            /* Description */
+            #recipe-card > div > p {
                 text-align: center;
                 font-style: italic;
-                 margin-bottom: 24px;
+                font-size: 12pt;
+                margin-bottom: 0.5in;
+                color: #333 !important;
             }
+            
+            /* Section Headers (Ingredients/Instructions) */
              #recipe-card h3 {
-                font-size: 16pt !important;
+                font-size: 18pt !important;
                 font-weight: bold;
-                border-bottom: 2px solid #ccc !important;
+                color: black !important;
+                /* Green accent line */
+                border-bottom: 3px solid #10B981 !important; /* Emerald green */
                 padding-bottom: 8px;
                 margin-bottom: 16px;
             }
+
+            /* List Styling */
             #recipe-card ul, #recipe-card ol {
                 font-size: 12pt;
+                line-height: 1.6;
+            }
+            
+            /* Force color printing */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
         }
     </style>
@@ -94,8 +129,9 @@
     <script>
         // --- DOM REFERENCES ---
         const dynamicContentContainer = document.getElementById('dynamic-content-container');
-        let currentRecipe = null;
+        let recipeHistory = [];
         let originalIngredients = '';
+        let lastUsedLanguage = 'English'; // To remember language for follow-ups
 
         // --- STATE & RENDERING LOGIC ---
         const render = (state, data = null) => {
@@ -151,6 +187,12 @@
         const getResultHtml = (recipe) => {
             const ingredientsHtml = recipe.ingredients.map(item => `<li class="flex items-start"><span class="mr-3 mt-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full"></span><span>${item}</span></li>`).join('');
             const instructionsHtml = recipe.instructions.map((step, index) => `<li class="flex items-start"><span class="mr-3 font-bold text-emerald-600 text-lg">${index + 1}</span><p>${step}</p></li>`).join('');
+            const undoButtonHtml = recipeHistory.length > 1 ? `
+                <button id="undo-btn" class="w-full sm:w-auto bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l4-4m-4 4l4 4"></path></svg>
+                    Undo
+                </button>
+            ` : '';
 
             return `
                 <div id="recipe-result-container" class="animate-fade-in">
@@ -168,17 +210,18 @@
                             </div>
                         </div>
                         <div id="action-buttons" class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
+                            ${undoButtonHtml}
                             <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Print</button>
                             <button id="share-btn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-teal-600 transition">Share</button>
                         </div>
                     </div>
                     <!-- Follow-up Section -->
                     <div id="follow-up-section" class="mt-10 pt-6 border-t-2 border-dashed">
-                         <h3 class="text-lg font-semibold text-gray-700 mb-2">Need a change?</h3>
-                         <p class="text-sm text-gray-500 mb-4">Ask for a modification, like "make it vegetarian" or "add a side dish."</p>
-                         <form id="follow-up-form" class="flex items-center gap-4">
-                            <input id="follow-up-input" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="Your query...">
-                            <button id="follow-up-btn" type="submit" class="bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-emerald-700 transition">Submit</button>
+                         <h3 class="text-lg font-bold text-gray-800 mb-2">Refine Your Recipe</h3>
+                         <p class="text-sm text-gray-500 mb-4">Ask for a change, like "I don't have garlic" or "make it for two people."</p>
+                         <form id="follow-up-form" class="flex items-center gap-2 sm:gap-4">
+                            <input id="follow-up-input" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., replace chicken with tofu">
+                            <button id="follow-up-btn" type="submit" class="bg-emerald-600 text-white font-semibold py-3 px-5 rounded-lg hover:bg-emerald-700 transition shrink-0">Refine</button>
                          </form>
                     </div>
                     <button id="back-to-form-btn" class="w-full mt-8 text-center text-sm font-semibold text-gray-500 hover:text-gray-900">Create Another Recipe</button>
@@ -215,6 +258,10 @@
                 document.getElementById('print-btn').addEventListener('click', () => window.print());
                 document.getElementById('share-btn').addEventListener('click', handleShare);
                 document.getElementById('follow-up-form').addEventListener('submit', (e) => handleApiCall(e, true));
+                const undoBtn = document.getElementById('undo-btn');
+                if (undoBtn) {
+                    undoBtn.addEventListener('click', handleUndo);
+                }
             } else if (state === 'ERROR') {
                 document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
             }
@@ -223,33 +270,40 @@
         const handleApiCall = async (event, isFollowUp = false) => {
             event.preventDefault();
             
-            const selectedLanguage = document.getElementById('language-input').value;
-            let ingredients, userQuery;
+            let selectedLanguage;
+            let userQuery;
+            let systemPrompt;
 
             if (isFollowUp) {
+                selectedLanguage = lastUsedLanguage; // Use the stored language
                 const followUpInput = document.getElementById('follow-up-input');
-                if (!followUpInput.value.trim()) {
+                const followUpQuery = followUpInput.value.trim();
+                if (!followUpQuery) {
                     alert('Please enter a follow-up query.');
                     return;
                 }
-                ingredients = originalIngredients;
-                userQuery = `Based on a previous recipe for "${currentRecipe.recipeName}" using ingredients like "${ingredients}", please generate a new recipe that incorporates this request: "${followUpInput.value}".`;
+                const previousRecipeJson = JSON.stringify(recipeHistory[recipeHistory.length - 1]);
+                userQuery = `Given the following recipe JSON: ${previousRecipeJson}. Please modify it based on this request: "${followUpQuery}".`;
+                systemPrompt = `You are a recipe modification assistant. Your task is to take an existing recipe in JSON format and a user's modification request, then return a *complete, updated recipe* in the exact same JSON structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. Your entire response must be ONLY the updated JSON object. All text must be in ${selectedLanguage}. For example, if the user says "I don't have garlic", you should suggest a substitute or remove it, and then return the full modified recipe JSON.`;
             } else {
+                selectedLanguage = document.getElementById('language-input').value;
+                lastUsedLanguage = selectedLanguage; // Store the language for follow-ups
+
                 const ingredientsInput = document.getElementById('ingredients-input');
-                if (!ingredientsInput.value.trim()) {
+                const ingredients = ingredientsInput.value.trim();
+                if (!ingredients) {
                     alert('Please enter some ingredients.');
                     return;
                 }
-                ingredients = ingredientsInput.value;
-                originalIngredients = ingredients; // Save for follow-ups
+                originalIngredients = ingredients; // Save for context
                 userQuery = `Generate a recipe using these ingredients: ${ingredients}.`;
+                systemPrompt = `You are a recipe generation assistant. Your ONLY output must be a single, valid JSON object with this exact structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. All string values inside the JSON must be in ${selectedLanguage}. Do not include any text, markdown, or explanations.`;
             }
 
             render('LOADING');
 
             const apiKey = "AIzaSyD6qeOpmXGSN_jsnDKScX76Qmln2sMtc58"; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const systemPrompt = `You are a recipe generation assistant. Your ONLY output must be a single, valid JSON object with this exact structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. All string values inside the JSON must be in ${selectedLanguage}. Do not include any text, markdown, or explanations.`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -272,7 +326,11 @@
                 if (!text) throw new Error('Invalid response structure from API.');
 
                 const recipe = JSON.parse(text);
-                currentRecipe = recipe;
+                
+                if (!isFollowUp) {
+                    recipeHistory = []; // Start a new history for a new recipe
+                }
+                recipeHistory.push(recipe); // Add the new/modified recipe to history
                 render('RESULT', recipe);
             } catch (error) {
                 console.error('Error:', error);
@@ -281,6 +339,7 @@
         };
 
         const handleShare = () => {
+            const currentRecipe = recipeHistory[recipeHistory.length - 1];
             if (!currentRecipe) return;
             let shareText = `*${currentRecipe.recipeName}*\n\n_${currentRecipe.description}_\n\n*Ingredients:*\n`;
             currentRecipe.ingredients.forEach(item => { shareText += `- ${item}\n`; });
@@ -289,7 +348,16 @@
             window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
         };
 
+        const handleUndo = () => {
+            if (recipeHistory.length > 1) {
+                recipeHistory.pop(); // Remove the latest version
+                const previousRecipe = recipeHistory[recipeHistory.length - 1];
+                render('RESULT', previousRecipe);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => render('FORM'));
     </script>
 </body>
 </html>
+
