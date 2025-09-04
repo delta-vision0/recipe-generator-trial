@@ -26,9 +26,15 @@
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        /* --- Custom Dropdown Styles --- */
+        /* --- Custom UI Styles --- */
         .custom-select-option:hover {
             background-color: #f0fdfa; /* A very light teal for hover */
+        }
+
+        #options-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, margin-top 0.4s ease-in-out;
         }
 
         /* --- PROFESSIONAL & ATTRACTIVE PRINT STYLES --- */
@@ -154,22 +160,44 @@
                         <label for="ingredients-input" class="block text-sm font-semibold text-gray-700 mb-2">Enter your ingredients (comma separated):</label>
                         <textarea id="ingredients-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., chicken breast, garlic, tomatoes, olive oil"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Language</label>
-                        <div id="language-dropdown" class="relative">
-                            <input type="hidden" id="language-input" value="English">
-                            <button type="button" id="language-btn" class="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
-                                <span class="flex items-center">
-                                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg>
-                                    <span id="language-selected" class="block truncate">English</span>
-                                </span>
-                                <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                </span>
-                            </button>
-                            <ul id="language-options" class="hidden absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                ${['English', 'Spanish', 'French', 'Hindi', 'Marathi'].map(lang => `<li class="custom-select-option text-gray-900 relative cursor-pointer select-none py-2 pl-4 pr-4" data-value="${lang}">${lang}</li>`).join('')}
-                            </ul>
+                    
+                    <!-- Advanced Options Toggle -->
+                    <button id="options-toggle-btn" type="button" class="text-sm font-semibold text-emerald-600 flex items-center gap-1">
+                        Advanced Options
+                        <svg id="options-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <!-- Hidden Options Panel -->
+                    <div id="options-panel">
+                        <div class="space-y-6 pt-4 border-t border-gray-200">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Language</label>
+                                <div id="language-dropdown" class="relative">
+                                    <input type="hidden" id="language-input" value="English">
+                                    <button type="button" id="language-btn" class="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
+                                        <span class="flex items-center">
+                                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg>
+                                            <span id="language-selected" class="block truncate">English</span>
+                                        </span>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
+                                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                        </span>
+                                    </button>
+                                    <ul id="language-options" class="hidden absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                        ${['English', 'Spanish', 'French', 'Hindi', 'Marathi'].map(lang => `<li class="custom-select-option text-gray-900 relative cursor-pointer select-none py-2 pl-4 pr-4" data-value="${lang}">${lang}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">Dietary Needs</label>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                                    <label class="flex items-center"><input type="checkbox" name="diet" value="Vegetarian" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"> <span class="ml-2 text-gray-700">Vegetarian</span></label>
+                                    <label class="flex items-center"><input type="checkbox" name="diet" value="Vegan" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"> <span class="ml-2 text-gray-700">Vegan</span></label>
+                                    <label class="flex items-center"><input type="checkbox" name="diet" value="Gluten-Free" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"> <span class="ml-2 text-gray-700">Gluten-Free</span></label>
+                                    <label class="flex items-center"><input type="checkbox" name="diet" value="Dairy-Free" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"> <span class="ml-2 text-gray-700">Dairy-Free</span></label>
+                                </div>
+                                <input type="text" id="diet-other" class="mt-4 block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="Other (e.g., sugar-free, nut-free)">
+                            </div>
                         </div>
                     </div>
                     <button id="generate-btn" type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-all transform hover:scale-105">
@@ -211,7 +239,7 @@
                         </div>
                         <div id="action-buttons" class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
                             ${undoButtonHtml}
-                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Print</button>
+                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Download as PDF</button>
                             <button id="share-btn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-teal-600 transition">Share</button>
                         </div>
                     </div>
@@ -238,6 +266,8 @@
         const attachListeners = (state) => {
             if (state === 'FORM') {
                 document.getElementById('recipe-form').addEventListener('submit', (e) => handleApiCall(e));
+                
+                // Custom dropdown logic
                 const dropdownBtn = document.getElementById('language-btn');
                 const optionsPanel = document.getElementById('language-options');
                 dropdownBtn.addEventListener('click', () => optionsPanel.classList.toggle('hidden'));
@@ -253,6 +283,23 @@
                         optionsPanel?.classList.add('hidden');
                     }
                 }, true);
+
+                // Advanced options toggle
+                const toggleBtn = document.getElementById('options-toggle-btn');
+                const advancedPanel = document.getElementById('options-panel');
+                const arrow = document.getElementById('options-arrow');
+                toggleBtn.addEventListener('click', () => {
+                    if (advancedPanel.style.maxHeight) {
+                        advancedPanel.style.maxHeight = null;
+                        advancedPanel.style.marginTop = '0';
+                        arrow.style.transform = 'rotate(0deg)';
+                    } else {
+                        advancedPanel.style.maxHeight = advancedPanel.scrollHeight + "px";
+                        advancedPanel.style.marginTop = '1rem';
+                        arrow.style.transform = 'rotate(180deg)';
+                    }
+                });
+
             } else if (state === 'RESULT') {
                 document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
                 document.getElementById('print-btn').addEventListener('click', () => window.print());
@@ -295,16 +342,24 @@
                 }
                 originalIngredients = ingredients;
                 lastUsedLanguage = document.getElementById('language-input').value;
+                
+                // Collect dietary info
+                const checkedDiets = Array.from(document.querySelectorAll('input[name="diet"]:checked')).map(cb => cb.value);
+                const otherDiet = document.getElementById('diet-other').value.trim();
+                if (otherDiet) {
+                    checkedDiets.push(otherDiet);
+                }
+                
                 requestBody = {
                     isFollowUp: false,
                     ingredients: ingredients,
-                    language: lastUsedLanguage
+                    language: lastUsedLanguage,
+                    dietaryInfo: checkedDiets.join(', ') // Combine into a string
                 };
             }
 
             render('LOADING');
 
-            // This is the URL for our secure serverless function
             const apiUrl = `/api/generate-recipe`;
 
             try {
