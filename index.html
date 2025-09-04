@@ -14,7 +14,7 @@
     <style>
         body {
             font-family: 'Manrope', sans-serif;
-            background-color: #f8fafc; /* A very clean, light gray */
+            background-color: #f0f5f5; /* A very light green-tinted gray */
         }
 
         /* --- Animations --- */
@@ -270,50 +270,48 @@
         const handleApiCall = async (event, isFollowUp = false) => {
             event.preventDefault();
             
-            let selectedLanguage;
-            let userQuery;
-            let systemPrompt;
+            let requestBody;
 
             if (isFollowUp) {
-                selectedLanguage = lastUsedLanguage; // Use the stored language
                 const followUpInput = document.getElementById('follow-up-input');
                 const followUpQuery = followUpInput.value.trim();
                 if (!followUpQuery) {
                     alert('Please enter a follow-up query.');
                     return;
                 }
-                const previousRecipeJson = JSON.stringify(recipeHistory[recipeHistory.length - 1]);
-                userQuery = `Given the following recipe JSON: ${previousRecipeJson}. Please modify it based on this request: "${followUpQuery}".`;
-                systemPrompt = `You are a recipe modification assistant. Your task is to take an existing recipe in JSON format and a user's modification request, then return a *complete, updated recipe* in the exact same JSON structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. Your entire response must be ONLY the updated JSON object. All text must be in ${selectedLanguage}. For example, if the user says "I don't have garlic", you should suggest a substitute or remove it, and then return the full modified recipe JSON.`;
+                const previousRecipe = recipeHistory[recipeHistory.length - 1];
+                requestBody = {
+                    isFollowUp: true,
+                    query: followUpQuery,
+                    previousRecipe: previousRecipe,
+                    language: lastUsedLanguage
+                };
             } else {
-                selectedLanguage = document.getElementById('language-input').value;
-                lastUsedLanguage = selectedLanguage; // Store the language for follow-ups
-
                 const ingredientsInput = document.getElementById('ingredients-input');
                 const ingredients = ingredientsInput.value.trim();
                 if (!ingredients) {
                     alert('Please enter some ingredients.');
                     return;
                 }
-                originalIngredients = ingredients; // Save for context
-                userQuery = `Generate a recipe using these ingredients: ${ingredients}.`;
-                systemPrompt = `You are a recipe generation assistant. Your ONLY output must be a single, valid JSON object with this exact structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. All string values inside the JSON must be in ${selectedLanguage}. Do not include any text, markdown, or explanations.`;
+                originalIngredients = ingredients;
+                lastUsedLanguage = document.getElementById('language-input').value;
+                requestBody = {
+                    isFollowUp: false,
+                    ingredients: ingredients,
+                    language: lastUsedLanguage
+                };
             }
 
             render('LOADING');
 
-            const apiKey = "AIzaSyD6qeOpmXGSN_jsnDKScX76Qmln2sMtc58"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            // This is the URL for our secure serverless function
+            const apiUrl = `/api/generate-recipe`;
 
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {
@@ -321,20 +319,17 @@
                     throw new Error(errorData || `Request failed with status ${response.status}`);
                 }
                 
-                const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!text) throw new Error('Invalid response structure from API.');
-
-                const recipe = JSON.parse(text);
+                const recipe = await response.json();
                 
                 if (!isFollowUp) {
-                    recipeHistory = []; // Start a new history for a new recipe
+                    recipeHistory = []; // Start new history
                 }
-                recipeHistory.push(recipe); // Add the new/modified recipe to history
+                recipeHistory.push(recipe);
                 render('RESULT', recipe);
+
             } catch (error) {
                 console.error('Error:', error);
-                render('ERROR', "Could not generate a recipe. The API key may be invalid or restricted. Please check the console for more details.");
+                render('ERROR', "Could not generate a recipe. Please check your network and try again.");
             }
         };
 
