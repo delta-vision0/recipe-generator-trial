@@ -25,26 +25,24 @@
         .animate-fade-in {
             animation: fadeIn 0.5s ease-out forwards;
         }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
 
         /* --- Custom UI Styles --- */
         .custom-select-option:hover { background-color: #f0fdfa; }
         .toggle-bg:after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            background: white;
-            border-radius: 9999px;
-            width: 1.25rem;
-            height: 1.25rem;
-            transition: transform 0.2s ease-in-out;
+            content: ''; position: absolute; top: 2px; left: 2px; background: white; border-radius: 9999px;
+            width: 1.25rem; height: 1.25rem; transition: transform 0.2s ease-in-out;
         }
-        input:checked + .toggle-bg:after {
-            transform: translateX(100%);
-        }
-        input:checked + .toggle-bg {
-            background-color: #10B981; /* Emerald 600 */
-        }
+        input:checked + .toggle-bg:after { transform: translateX(100%); }
+        input:checked + .toggle-bg { background-color: #10B981; /* Emerald 600 */ }
 
         /* --- PRINT STYLES --- */
         @media print {
@@ -52,7 +50,8 @@
             body > #app-container > footer, 
             #back-to-form-btn, 
             #action-buttons, 
-            #follow-up-section { display: none !important; }
+            #follow-up-section,
+            #image-container { display: none !important; }
             body, #app-container, #main-card, #dynamic-content-container, #recipe-result-container {
                 all: initial; display: block; background: white !important; color: black !important; font-family: 'Times New Roman', Times, serif;
             }
@@ -70,7 +69,7 @@
     <div id="app-container" class="w-full max-w-lg">
         <!-- Header Section -->
         <header id="header-section" class="text-center mb-8 animate-fade-in">
-            <div class="flex items-center justify-center gap-3 mb-2">
+             <div class="flex items-center justify-center gap-3 mb-2">
                 <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <h1 class="text-4xl font-bold text-gray-800">Recipe Generator</h1>
             </div>
@@ -92,13 +91,13 @@
     </div>
 
     <script>
-        // --- DOM REFERENCES ---
+        // --- DOM REFERENCES & STATE ---
         const dynamicContentContainer = document.getElementById('dynamic-content-container');
         let recipeHistory = [];
         let originalIngredients = '';
-        let lastUsedLanguage = 'English'; // To remember language for follow-ups
+        let lastUsedLanguage = 'English';
 
-        // --- STATE & RENDERING LOGIC ---
+        // --- RENDER LOGIC ---
         const render = (state, data = null) => {
             let html = '';
             switch(state) {
@@ -117,7 +116,7 @@
                 <form id="recipe-form" class="space-y-6">
                     <div>
                         <label for="ingredients-input" class="block text-sm font-semibold text-gray-700 mb-2">Enter your ingredients (comma separated):</label>
-                        <textarea id="ingredients-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., chicken breast, garlic, tomatoes, olive oil"></textarea>
+                        <textarea id="ingredients-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., chicken breast, garlic, tomatoes"></textarea>
                     </div>
                     
                     <div class="space-y-4 pt-4 border-t border-gray-200">
@@ -126,13 +125,8 @@
                             <div id="language-dropdown" class="relative">
                                 <input type="hidden" id="language-input" value="English">
                                 <button type="button" id="language-btn" class="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
-                                    <span class="flex items-center">
-                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg>
-                                        <span id="language-selected" class="block truncate">English</span>
-                                    </span>
-                                    <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                    </span>
+                                    <span class="flex items-center"><svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg><span id="language-selected" class="block truncate">English</span></span>
+                                    <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2"><svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></span>
                                 </button>
                                 <ul id="language-options" class="hidden absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                                     ${['English', 'Spanish', 'French', 'Hindi', 'Marathi'].map(lang => `<li class="custom-select-option text-gray-900 relative cursor-pointer select-none py-2 pl-4 pr-4" data-value="${lang}">${lang}</li>`).join('')}
@@ -142,10 +136,7 @@
                         <div class="flex justify-between items-center">
                             <label class="block text-sm font-semibold text-gray-700">Vegetarian</label>
                             <label for="veg-toggle" class="flex items-center cursor-pointer">
-                                <div class="relative">
-                                    <input type="checkbox" id="veg-toggle" class="sr-only">
-                                    <div class="block bg-gray-200 w-10 h-6 rounded-full toggle-bg"></div>
-                                </div>
+                                <div class="relative"><input type="checkbox" id="veg-toggle" class="sr-only"><div class="block bg-gray-200 w-10 h-6 rounded-full toggle-bg"></div></div>
                             </label>
                         </div>
                          <div>
@@ -153,50 +144,38 @@
                             <input type="text" id="diet-other" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., sugar-free, Jain, nut-free">
                         </div>
                     </div>
-                    <button id="generate-btn" type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-all transform hover:scale-105">
-                        Generate Recipe
-                    </button>
+                    <button id="generate-btn" type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-all transform hover:scale-105">Generate Recipe</button>
                 </form>
             </div>`;
 
-        const getLoadingHtml = () => `
-            <div class="animate-fade-in text-center py-10">
-                 <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                 <h2 class="mt-6 text-xl font-bold text-gray-800">Generating your recipe...</h2>
-            </div>`;
+        const getLoadingHtml = () => `<div class="animate-fade-in text-center py-10"><div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div><h2 class="mt-6 text-xl font-bold text-gray-800">Generating your recipe...</h2></div>`;
 
         const getResultHtml = (recipe) => {
             const ingredientsHtml = recipe.ingredients.map(item => `<li class="flex items-start"><span class="mr-3 mt-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full"></span><span>${item}</span></li>`).join('');
             const instructionsHtml = recipe.instructions.map((step, index) => `<li class="flex items-start"><span class="mr-3 font-bold text-emerald-600 text-lg">${index + 1}</span><p>${step}</p></li>`).join('');
-            const undoButtonHtml = recipeHistory.length > 1 ? `
-                <button id="undo-btn" class="w-full sm:w-auto bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l4-4m-4 4l4 4"></path></svg>
-                    Undo
-                </button>
-            ` : '';
+            const undoButtonHtml = recipeHistory.length > 1 ? `<button id="undo-btn" class="w-full sm:w-auto bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition flex items-center justify-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l4-4m-4 4l4 4"></path></svg>Undo</button>` : '';
 
             return `
                 <div id="recipe-result-container" class="animate-fade-in">
+                    <div id="image-container" class="mb-8">
+                        <button id="generate-image-btn" class="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-dashed rounded-lg text-gray-500 hover:bg-gray-50 hover:border-emerald-500 hover:text-emerald-600 transition">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                             <span class="font-semibold">Generate Image of Dish</span>
+                        </button>
+                    </div>
                     <div id="recipe-card">
                         <h2 class="text-3xl font-extrabold text-gray-900 mb-2">${recipe.recipeName}</h2>
                         <p class="text-gray-600 mb-8 italic">"${recipe.description}"</p>
                         <div class="space-y-8">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Ingredients</h3>
-                                <ul class="space-y-2 text-gray-700">${ingredientsHtml}</ul>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Instructions</h3>
-                                <ol class="space-y-4 text-gray-700">${instructionsHtml}</ol>
-                            </div>
+                            <div><h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Ingredients</h3><ul class="space-y-2 text-gray-700">${ingredientsHtml}</ul></div>
+                            <div><h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Instructions</h3><ol class="space-y-4 text-gray-700">${instructionsHtml}</ol></div>
                         </div>
                         <div id="action-buttons" class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
                             ${undoButtonHtml}
-                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Download</button>
+                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Print</button>
                             <button id="share-btn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-teal-600 transition">Share</button>
                         </div>
                     </div>
-                    <!-- Follow-up Section -->
                     <div id="follow-up-section" class="mt-10 pt-6 border-t-2 border-dashed">
                          <h3 class="text-lg font-bold text-gray-800 mb-2">Refine Your Recipe</h3>
                          <p class="text-sm text-gray-500 mb-4">Ask for a change, like "I don't have garlic" or "make it for two people."</p>
@@ -209,13 +188,9 @@
                 </div>`;
         };
         
-        const getErrorHtml = (message) => `
-            <div class="animate-fade-in text-center">
-                <h2 class="text-2xl font-bold text-red-600 mb-2">Something Went Wrong</h2>
-                <p class="text-gray-600 mb-6">${message}</p>
-                <button id="back-to-form-btn" class="bg-gray-800 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Try Again</button>
-            </div>`;
+        const getErrorHtml = (message) => `<div class="animate-fade-in text-center"><h2 class="text-2xl font-bold text-red-600 mb-2">Something Went Wrong</h2><p class="text-gray-600 mb-6">${message}</p><button id="back-to-form-btn" class="bg-gray-800 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Try Again</button></div>`;
         
+        // --- EVENT LISTENER ATTACHMENT ---
         const attachListeners = (state) => {
             if (state === 'FORM') {
                 document.getElementById('recipe-form').addEventListener('submit', (e) => handleApiCall(e));
@@ -239,15 +214,15 @@
                 document.getElementById('print-btn').addEventListener('click', () => window.print());
                 document.getElementById('share-btn').addEventListener('click', handleShare);
                 document.getElementById('follow-up-form').addEventListener('submit', (e) => handleApiCall(e, true));
+                document.getElementById('generate-image-btn').addEventListener('click', handleImageGeneration);
                 const undoBtn = document.getElementById('undo-btn');
-                if (undoBtn) {
-                    undoBtn.addEventListener('click', handleUndo);
-                }
+                if (undoBtn) undoBtn.addEventListener('click', handleUndo);
             } else if (state === 'ERROR') {
                 document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
             }
         };
 
+        // --- API CALL LOGIC ---
         const handleApiCall = async (event, isFollowUp = false) => {
             event.preventDefault();
             
@@ -256,67 +231,69 @@
             if (isFollowUp) {
                 const followUpInput = document.getElementById('follow-up-input');
                 const followUpQuery = followUpInput.value.trim();
-                if (!followUpQuery) {
-                    alert('Please enter a follow-up query.');
-                    return;
-                }
-                const previousRecipe = recipeHistory[recipeHistory.length - 1];
+                if (!followUpQuery) return alert('Please enter a follow-up query.');
                 requestBody = {
-                    isFollowUp: true,
-                    query: followUpQuery,
-                    previousRecipe: previousRecipe,
-                    language: lastUsedLanguage
+                    isFollowUp: true, query: followUpQuery, language: lastUsedLanguage,
+                    previousRecipe: recipeHistory[recipeHistory.length - 1]
                 };
             } else {
-                const ingredientsInput = document.getElementById('ingredients-input');
-                const ingredients = ingredientsInput.value.trim();
-                if (!ingredients) {
-                    alert('Please enter some ingredients.');
-                    return;
-                }
+                const ingredients = document.getElementById('ingredients-input').value.trim();
+                if (!ingredients) return alert('Please enter some ingredients.');
                 originalIngredients = ingredients;
                 lastUsedLanguage = document.getElementById('language-input').value;
-                
-                // Collect dietary info from the new, simpler inputs
                 const isVegetarian = document.getElementById('veg-toggle').checked;
                 const otherDiet = document.getElementById('diet-other').value.trim();
-                
                 requestBody = {
-                    isFollowUp: false,
-                    ingredients: ingredients,
-                    language: lastUsedLanguage,
-                    isVegetarian: isVegetarian,
-                    otherNeeds: otherDiet
+                    isFollowUp: false, ingredients, language: lastUsedLanguage, isVegetarian, otherNeeds: otherDiet
                 };
             }
 
             render('LOADING');
 
-            const apiUrl = `/api/generate-recipe`;
-
             try {
-                const response = await fetch(apiUrl, {
+                const response = await fetch(`/api/generate-recipe`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.text();
-                    throw new Error(errorData || `Request failed with status ${response.status}`);
-                }
+                if (!response.ok) throw new Error((await response.text()) || 'Failed to generate recipe');
                 
                 const recipe = await response.json();
-                
-                if (!isFollowUp) {
-                    recipeHistory = []; // Start new history
-                }
+                if (!isFollowUp) recipeHistory = [];
                 recipeHistory.push(recipe);
                 render('RESULT', recipe);
 
             } catch (error) {
                 console.error('Error:', error);
                 render('ERROR', "Could not generate a recipe. Please check your network and try again.");
+            }
+        };
+        
+        const handleImageGeneration = async () => {
+            const currentRecipe = recipeHistory[recipeHistory.length - 1];
+            if (!currentRecipe) return;
+
+            const imageContainer = document.getElementById('image-container');
+            imageContainer.innerHTML = `<div class="w-full aspect-video rounded-lg shimmer"></div>`;
+
+            try {
+                 const response = await fetch(`/api/generate-image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipeName: currentRecipe.recipeName,
+                        description: currentRecipe.description
+                    })
+                });
+                if (!response.ok) throw new Error((await response.text()) || 'Failed to generate image');
+
+                const { base64Image } = await response.json();
+                imageContainer.innerHTML = `<img src="data:image/png;base64,${base64Image}" alt="AI generated image of ${currentRecipe.recipeName}" class="w-full h-full object-cover rounded-lg shadow-lg animate-fade-in">`;
+
+            } catch (error) {
+                console.error('Image Gen Error:', error);
+                imageContainer.innerHTML = `<div class="w-full aspect-video rounded-lg border-2 border-dashed flex items-center justify-center text-center text-red-500 p-4">Could not generate image.<br/>${error.message}</div>`;
             }
         };
 
@@ -332,13 +309,14 @@
 
         const handleUndo = () => {
             if (recipeHistory.length > 1) {
-                recipeHistory.pop(); // Remove the latest version
-                const previousRecipe = recipeHistory[recipeHistory.length - 1];
-                render('RESULT', previousRecipe);
+                recipeHistory.pop();
+                render('RESULT', recipeHistory[recipeHistory.length - 1]);
             }
         };
 
+        // --- INITIALIZE APP ---
         document.addEventListener('DOMContentLoaded', () => render('FORM'));
     </script>
 </body>
 </html>
+
