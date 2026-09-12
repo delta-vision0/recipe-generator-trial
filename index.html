@@ -1,344 +1,419 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision Recipe Generator</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Manrope -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        body {
-            font-family: 'Manrope', sans-serif;
-            background-color: #f0f5f5; /* A very light green-tinted gray */
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RasoiAI - Smart Recipe Generator</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-        /* --- Animations --- */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(1rem); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        /* --- Custom UI Styles --- */
-        .custom-select-option:hover { background-color: #f0fdfa; }
-        .toggle-bg:after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            background: white;
-            border-radius: 9999px;
-            width: 1.25rem;
-            height: 1.25rem;
-            transition: transform 0.2s ease-in-out;
-        }
-        input:checked + .toggle-bg:after {
-            transform: translateX(100%);
-        }
-        input:checked + .toggle-bg {
-            background-color: #10B981; /* Emerald 600 */
-        }
-
-        /* --- PRINT STYLES --- */
-        @media print {
-            body > #app-container > header, 
-            body > #app-container > footer, 
-            #back-to-form-btn, 
-            #action-buttons, 
-            #follow-up-section { display: none !important; }
-            body, #app-container, #main-card, #dynamic-content-container, #recipe-result-container {
-                all: initial; display: block; background: white !important; color: black !important; font-family: 'Times New Roman', Times, serif;
-            }
-            #recipe-card { padding: 0.75in; border: none !important; box-shadow: none !important; }
-            #recipe-card h2 { font-size: 26pt !important; font-weight: bold; text-align: center; margin-bottom: 0.25in; color: black !important; }
-            #recipe-card > div > p { text-align: center; font-style: italic; font-size: 12pt; margin-bottom: 0.5in; color: #333 !important; }
-            #recipe-card h3 { font-size: 18pt !important; font-weight: bold; color: black !important; border-bottom: 3px solid #10B981 !important; padding-bottom: 8px; margin-bottom: 16px; }
-            #recipe-card ul, #recipe-card ol { font-size: 12pt; line-height: 1.6; }
-            * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
-        }
-    </style>
+  <style>
+    @keyframes pulse-soft {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(0.98); }
+    }
+    .animate-pulse-soft {
+      animation: pulse-soft 2s infinite ease-in-out;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    /* Prose styling for recipe output */
+    .recipe-body h2, .recipe-body h3 {
+      font-weight: 700;
+      color: #1f2937;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .recipe-body ul, .recipe-body ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .recipe-body ul { list-style-type: disc; }
+    .recipe-body ol { list-style-type: decimal; }
+    .recipe-body li { margin-bottom: 0.35rem; }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 min-h-screen text-slate-800 antialiased flex flex-col font-sans">
 
-    <div id="app-container" class="w-full max-w-lg">
-        <!-- Header Section -->
-        <header id="header-section" class="text-center mb-8 animate-fade-in">
-            <div class="flex items-center justify-center gap-3 mb-2">
-                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h1 class="text-4xl font-bold text-gray-800">Recipe Generator</h1>
-            </div>
-            <p class="text-gray-500">What do you have in your kitchen? Let's cook something up!</p>
-        </header>
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-40 glass-card border-b border-orange-100 shadow-sm transition-all duration-300">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center shadow-md text-white">
+          <i data-lucide="chef-hat" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-700">RasoiAI</h1>
+          <p class="text-xs text-slate-500 font-medium leading-none">English • हिन्दी • मराठी</p>
+        </div>
+      </div>
 
-        <!-- Main Application Card -->
-        <main id="main-card" class="bg-white rounded-2xl shadow-lg transition-all duration-500 p-8 sm:p-10">
-            <!-- Dynamic content will be injected here -->
-            <div id="dynamic-content-container">
-                <!-- Initial Form View -->
-            </div>
-        </main>
+      <div class="flex items-center space-x-2">
+        <button id="openSettingsBtn" class="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-800 transition-all duration-200 shadow-sm">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i>
+          <span id="keyStatusBadge">API Key</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <!-- Footer -->
-        <footer class="text-center mt-8 text-gray-400 text-sm">
-            <p>&copy; 2025 Vision Recipe Generator. All rights reserved by Navanath Bhosale.</p>
-        </footer>
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+
+    <!-- Key Warning Banner (if no key set) -->
+    <div id="noKeyBanner" class="hidden rounded-xl bg-rose-50 border border-rose-200 p-4 shadow-sm flex items-center justify-between animate-fade-in">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 flex-shrink-0"></i>
+        <p class="text-xs sm:text-sm text-rose-800 font-medium">Add your Gemini API Key in Settings to generate recipes.</p>
+      </div>
+      <button id="bannerSettingsBtn" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-md transition shadow">Configure</button>
     </div>
 
-    <script>
-        // --- DOM REFERENCES ---
-        const dynamicContentContainer = document.getElementById('dynamic-content-container');
-        let recipeHistory = [];
-        let originalIngredients = '';
-        let lastUsedLanguage = 'English'; // To remember language for follow-ups
+    <!-- Mode Selector Card -->
+    <div class="glass-card border border-white/80 rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center pb-5 border-b border-slate-100">
+        <!-- Search Mode Toggle -->
+        <div class="flex bg-slate-100/80 p-1 rounded-xl w-full sm:w-auto">
+          <button id="modeNameBtn" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-white text-orange-600 shadow-sm">
+            <i data-lucide="soup" class="w-4 h-4"></i>
+            <span>By Dish Name</span>
+          </button>
+          <button id="modeIngBtn" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900">
+            <i data-lucide="carrot" class="w-4 h-4"></i>
+            <span>By Ingredients</span>
+          </button>
+        </div>
 
-        // --- STATE & RENDERING LOGIC ---
-        const render = (state, data = null) => {
-            let html = '';
-            switch(state) {
-                case 'FORM': html = getFormHtml(); break;
-                case 'LOADING': html = getLoadingHtml(); break;
-                case 'RESULT': html = getResultHtml(data); break;
-                case 'ERROR': html = getErrorHtml(data); break;
-            }
-            dynamicContentContainer.innerHTML = html;
-            attachListeners(state);
-        };
+        <!-- Language Selector -->
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="languages" class="w-3.5 h-3.5"></i> Language:
+          </label>
+          <select id="langSelect" class="bg-white border border-slate-200 rounded-lg text-xs font-semibold px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 shadow-sm">
+            <option value="English">English</option>
+            <option value="Hindi">हिन्दी (Hindi)</option>
+            <option value="Marathi">मराठी (Marathi)</option>
+          </select>
+        </div>
+      </div>
 
-        // --- HTML TEMPLATES ---
-        const getFormHtml = () => `
-            <div class="animate-fade-in space-y-6">
-                <form id="recipe-form" class="space-y-6">
-                    <div>
-                        <label for="ingredients-input" class="block text-sm font-semibold text-gray-700 mb-2">Enter your ingredients (comma separated) or Any Dish Name :</label>
-                        <textarea id="ingredients-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder=".  e.g., chicken breast, garlic, tomatoes, olive oil or Shahi Paneer,Misal Pav"></textarea>
-                    </div>
-                    
-                    <div class="space-y-4 pt-4 border-t border-gray-200">
-                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Language</label>
-                            <div id="language-dropdown" class="relative">
-                                <input type="hidden" id="language-input" value="English">
-                                <button type="button" id="language-btn" class="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">
-                                    <span class="flex items-center">
-                                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3"></path></svg>
-                                        <span id="language-selected" class="block truncate">English</span>
-                                    </span>
-                                    <span class="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                    </span>
-                                </button>
-                                <ul id="language-options" class="hidden absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                    ${['English', 'Spanish', 'French', 'Hindi', 'Marathi'].map(lang => `<li class="custom-select-option text-gray-900 relative cursor-pointer select-none py-2 pl-4 pr-4" data-value="${lang}">${lang}</li>`).join('')}
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <label class="block text-sm font-semibold text-gray-700">Vegetarian</label>
-                            <label for="veg-toggle" class="flex items-center cursor-pointer">
-                                <div class="relative">
-                                    <input type="checkbox" id="veg-toggle" class="sr-only">
-                                    <div class="block bg-gray-200 w-10 h-6 rounded-full toggle-bg"></div>
-                                </div>
-                            </label>
-                        </div>
-                         <div>
-                            <label for="diet-other" class="block text-sm font-semibold text-gray-700 mb-2">Other Dietary Needs (optional)</label>
-                            <input type="text" id="diet-other" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., sugar-free, Jain, nut-free">
-                        </div>
-                    </div>
-                    <button id="generate-btn" type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600 transition-all transform hover:scale-105">
-                        Generate Recipe
-                    </button>
-                </form>
-            </div>`;
+      <!-- Form Inputs -->
+      <div class="mt-5 space-y-4">
+        <!-- Dish Name View -->
+        <div id="dishNameGroup">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Enter Dish Name</label>
+          <div class="relative">
+            <input type="text" id="dishInput" placeholder="e.g., Paneer Butter Masala, Puran Poli, Pasta Arrabiata..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-11 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition">
+            <i data-lucide="utensils" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5"></i>
+          </div>
+        </div>
 
-        const getLoadingHtml = () => `
-            <div class="animate-fade-in text-center py-10">
-                 <div class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                 <h2 class="mt-6 text-xl font-bold text-gray-800">Generating your recipe...</h2>
-            </div>`;
+        <!-- Ingredients View (hidden by default) -->
+        <div id="ingredientsGroup" class="hidden">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Enter Available Ingredients (Comma Separated)</label>
+          <div class="relative">
+            <textarea id="ingInput" rows="3" placeholder="e.g., tomatoes, potatoes, cumin, mustard seeds, coriander, besan..." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-11 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition"></textarea>
+            <i data-lucide="shopping-basket" class="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5"></i>
+          </div>
+        </div>
 
-        const getResultHtml = (recipe) => {
-            const ingredientsHtml = recipe.ingredients.map(item => `<li class="flex items-start"><span class="mr-3 mt-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full"></span><span>${item}</span></li>`).join('');
-            const instructionsHtml = recipe.instructions.map((step, index) => `<li class="flex items-start"><span class="mr-3 font-bold text-emerald-600 text-lg">${index + 1}</span><p>${step}</p></li>`).join('');
-            const undoButtonHtml = recipeHistory.length > 1 ? `
-                <button id="undo-btn" class="w-full sm:w-auto bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l4-4m-4 4l4 4"></path></svg>
-                    Undo
-                </button>
-            ` : '';
+        <!-- Preferences Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Diet Preference</label>
+            <select id="dietSelect" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-500">
+              <option value="Any">All / Any</option>
+              <option value="Vegetarian">Vegetarian (शाकाहारी)</option>
+              <option value="Vegan">Vegan</option>
+              <option value="Non-Vegetarian">Non-Vegetarian</option>
+              <option value="Jain (No Onion/Garlic)">Jain (No Onion/Garlic)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Spice Level</label>
+            <select id="spiceSelect" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-500">
+              <option value="Medium">Medium</option>
+              <option value="Mild">Mild / Low</option>
+              <option value="Spicy">Spicy (झणझणीत / तीखा)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Cooking Time</label>
+            <select id="timeSelect" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-500">
+              <option value="Any">Any Time</option>
+              <option value="Quick (under 20 mins)">Quick (< 20 mins)</option>
+              <option value="Standard (30-45 mins)">Standard (30-45 mins)</option>
+            </select>
+          </div>
+        </div>
 
-            return `
-                <div id="recipe-result-container" class="animate-fade-in">
-                    <div id="recipe-card">
-                        <h2 class="text-3xl font-extrabold text-gray-900 mb-2">${recipe.recipeName}</h2>
-                        <p class="text-gray-600 mb-8 italic">"${recipe.description}"</p>
-                        <div class="space-y-8">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Ingredients</h3>
-                                <ul class="space-y-2 text-gray-700">${ingredientsHtml}</ul>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Instructions</h3>
-                                <ol class="space-y-4 text-gray-700">${instructionsHtml}</ol>
-                            </div>
-                        </div>
-                        <div id="action-buttons" class="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-center gap-4">
-                            ${undoButtonHtml}
-                            <button id="print-btn" class="w-full sm:w-auto bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Download</button>
-                            <button id="share-btn" class="w-full sm:w-auto bg-teal-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-teal-600 transition">Share</button>
-                        </div>
-                    </div>
-                    <!-- Follow-up Section -->
-                    <div id="follow-up-section" class="mt-10 pt-6 border-t-2 border-dashed">
-                         <h3 class="text-lg font-bold text-gray-800 mb-2">Refine Your Recipe</h3>
-                         <p class="text-sm text-gray-500 mb-4">Ask for a change, like "I don't have garlic" or "make it for two people."</p>
-                         <form id="follow-up-form" class="flex items-center gap-2 sm:gap-4">
-                            <input id="follow-up-input" type="text" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-500 focus:ring-opacity-50" placeholder="e.g., replace chicken with tofu">
-                            <button id="follow-up-btn" type="submit" class="bg-emerald-600 text-white font-semibold py-3 px-5 rounded-lg hover:bg-emerald-700 transition shrink-0">Refine</button>
-                         </form>
-                    </div>
-                    <button id="back-to-form-btn" class="w-full mt-8 text-center text-sm font-semibold text-gray-500 hover:text-gray-900">Create Another Recipe</button>
-                </div>`;
-        };
-        
-        const getErrorHtml = (message) => `
-            <div class="animate-fade-in text-center">
-                <h2 class="text-2xl font-bold text-red-600 mb-2">Something Went Wrong</h2>
-                <p class="text-gray-600 mb-6">${message}</p>
-                <button id="back-to-form-btn" class="bg-gray-800 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Try Again</button>
-            </div>`;
-        
-        const attachListeners = (state) => {
-            if (state === 'FORM') {
-                document.getElementById('recipe-form').addEventListener('submit', (e) => handleApiCall(e));
-                const dropdownBtn = document.getElementById('language-btn');
-                const optionsPanel = document.getElementById('language-options');
-                dropdownBtn.addEventListener('click', () => optionsPanel.classList.toggle('hidden'));
-                optionsPanel.querySelectorAll('li').forEach(option => {
-                    option.addEventListener('click', () => {
-                        document.getElementById('language-selected').textContent = option.dataset.value;
-                        document.getElementById('language-input').value = option.dataset.value;
-                        optionsPanel.classList.add('hidden');
-                    });
-                });
-                document.addEventListener('click', (e) => {
-                    if (!document.getElementById('language-dropdown')?.contains(e.target)) {
-                        optionsPanel?.classList.add('hidden');
-                    }
-                }, true);
-            } else if (state === 'RESULT') {
-                document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
-                document.getElementById('print-btn').addEventListener('click', () => window.print());
-                document.getElementById('share-btn').addEventListener('click', handleShare);
-                document.getElementById('follow-up-form').addEventListener('submit', (e) => handleApiCall(e, true));
-                const undoBtn = document.getElementById('undo-btn');
-                if (undoBtn) {
-                    undoBtn.addEventListener('click', handleUndo);
-                }
-            } else if (state === 'ERROR') {
-                document.getElementById('back-to-form-btn').addEventListener('click', () => render('FORM'));
-            }
-        };
+        <!-- Action Button -->
+        <button id="generateBtn" class="w-full mt-4 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-500/20 flex items-center justify-center space-x-2 transition-all duration-300 transform active:scale-[0.99]">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+          <span>Generate Recipe</span>
+        </button>
+      </div>
+    </div>
 
-        const handleApiCall = async (event, isFollowUp = false) => {
-            event.preventDefault();
-            
-            let requestBody;
+    <!-- Loading State -->
+    <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center p-12 glass-card rounded-2xl border border-white/60">
+      <div class="w-14 h-14 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+      <p class="mt-4 font-semibold text-slate-700">Crafting your recipe with Gemini 3.8 Flash...</p>
+      <p class="text-xs text-slate-400 mt-1">Preparing ingredients, measurements, and authentic spices</p>
+    </div>
 
-            if (isFollowUp) {
-                const followUpInput = document.getElementById('follow-up-input');
-                const followUpQuery = followUpInput.value.trim();
-                if (!followUpQuery) {
-                    alert('Please enter a follow-up query.');
-                    return;
-                }
-                const previousRecipe = recipeHistory[recipeHistory.length - 1];
-                requestBody = {
-                    isFollowUp: true,
-                    query: followUpQuery,
-                    previousRecipe: previousRecipe,
-                    language: lastUsedLanguage
-                };
-            } else {
-                const ingredientsInput = document.getElementById('ingredients-input');
-                const ingredients = ingredientsInput.value.trim();
-                if (!ingredients) {
-                    alert('Please enter some ingredients.');
-                    return;
-                }
-                originalIngredients = ingredients;
-                lastUsedLanguage = document.getElementById('language-input').value;
-                
-                // Collect dietary info from the new, simpler inputs
-                const isVegetarian = document.getElementById('veg-toggle').checked;
-                const otherDiet = document.getElementById('diet-other').value.trim();
-                
-                requestBody = {
-                    isFollowUp: false,
-                    ingredients: ingredients,
-                    language: lastUsedLanguage,
-                    isVegetarian: isVegetarian,
-                    otherNeeds: otherDiet
-                };
-            }
+    <!-- Output Card -->
+    <div id="resultCard" class="hidden glass-card border border-white/80 rounded-2xl p-6 sm:p-8 shadow-sm">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div class="flex items-center space-x-2 text-xs font-semibold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+          <span>Generated with gemini-3.8-flash</span>
+        </div>
+        <button id="copyBtn" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span id="copyText">Copy</span>
+        </button>
+      </div>
 
-            render('LOADING');
+      <div id="recipeOutput" class="recipe-body mt-6 text-slate-700 text-sm sm:text-base leading-relaxed"></div>
+    </div>
+  </main>
 
-            const apiUrl = `/api/generate-recipe`;
+  <!-- Settings Modal (API Key Entry) -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <div class="p-2 bg-orange-100 text-orange-600 rounded-lg">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </div>
+          <h3 class="font-bold text-slate-800">API Settings</h3>
+        </div>
+        <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Gemini API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm font-mono">
+          <p class="text-[11px] text-slate-400 mt-1">Your key is stored strictly in your local browser storage (`localStorage`).</p>
+        </div>
 
-                if (!response.ok) {
-                    const errorData = await response.text();
-                    throw new Error(errorData || `Request failed with status ${response.status}`);
-                }
-                
-                const recipe = await response.json();
-                
-                if (!isFollowUp) {
-                    recipeHistory = []; // Start new history
-                }
-                recipeHistory.push(recipe);
-                render('RESULT', recipe);
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Model Configured</label>
+          <input type="text" value="gemini-3.8-flash" disabled class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-500">
+        </div>
+      </div>
 
-            } catch (error) {
-                console.error('Error:', error);
-                render('ERROR', "Could not generate a recipe. Please check your network and try again.");
-            }
-        };
+      <div class="mt-6 flex justify-end space-x-2">
+        <button id="saveKeyBtn" class="px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-xl shadow-md transition">Save & Apply</button>
+      </div>
+    </div>
+  </div>
 
-        const handleShare = () => {
-            const currentRecipe = recipeHistory[recipeHistory.length - 1];
-            if (!currentRecipe) return;
-            let shareText = `*${currentRecipe.recipeName}*\n\n_${currentRecipe.description}_\n\n*Ingredients:*\n`;
-            currentRecipe.ingredients.forEach(item => { shareText += `- ${item}\n`; });
-            shareText += '\n*Instructions:*\n';
-            currentRecipe.instructions.forEach((step, index) => { shareText += `${index + 1}. ${step}\n`; });
-            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
-        };
+  <script>
+    // Lucide Icons Initialization
+    lucide.createIcons();
 
-        const handleUndo = () => {
-            if (recipeHistory.length > 1) {
-                recipeHistory.pop(); // Remove the latest version
-                const previousRecipe = recipeHistory[recipeHistory.length - 1];
-                render('RESULT', previousRecipe);
-            }
-        };
+    // State
+    let currentMode = 'dish'; // 'dish' | 'ingredients'
+    const MODEL_NAME = 'gemini-3.8-flash';
 
-        document.addEventListener('DOMContentLoaded', () => render('FORM'));
-    </script>
+    // UI Elements
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const keyStatusBadge = document.getElementById('keyStatusBadge');
+    const noKeyBanner = document.getElementById('noKeyBanner');
+    const bannerSettingsBtn = document.getElementById('bannerSettingsBtn');
+
+    const modeNameBtn = document.getElementById('modeNameBtn');
+    const modeIngBtn = document.getElementById('modeIngBtn');
+    const dishNameGroup = document.getElementById('dishNameGroup');
+    const ingredientsGroup = document.getElementById('ingredientsGroup');
+
+    const generateBtn = document.getElementById('generateBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultCard = document.getElementById('resultCard');
+    const recipeOutput = document.getElementById('recipeOutput');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyText = document.getElementById('copyText');
+
+    // Check Local Storage for API Key
+    function updateKeyStatus() {
+      const key = localStorage.getItem('gemini_api_key');
+      if (key && key.trim().length > 0) {
+        keyStatusBadge.textContent = 'Key Active';
+        keyStatusBadge.parentElement.classList.replace('bg-orange-100', 'bg-emerald-100');
+        keyStatusBadge.parentElement.classList.replace('text-orange-800', 'text-emerald-800');
+        noKeyBanner.classList.add('hidden');
+      } else {
+        keyStatusBadge.textContent = 'Add Key';
+        keyStatusBadge.parentElement.classList.replace('bg-emerald-100', 'bg-orange-100');
+        keyStatusBadge.parentElement.classList.replace('text-emerald-800', 'text-orange-800');
+        noKeyBanner.classList.remove('hidden');
+      }
+    }
+
+    // Modal Events
+    openSettingsBtn.addEventListener('click', () => {
+      apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+      settingsModal.classList.remove('hidden');
+    });
+    bannerSettingsBtn.addEventListener('click', () => {
+      apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+      settingsModal.classList.remove('hidden');
+    });
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.add('hidden');
+    });
+    saveKeyBtn.addEventListener('click', () => {
+      const val = apiKeyInput.value.trim();
+      if (val) {
+        localStorage.setItem('gemini_api_key', val);
+      } else {
+        localStorage.removeItem('gemini_api_key');
+      }
+      updateKeyStatus();
+      settingsModal.classList.add('hidden');
+    });
+
+    // Mode Toggle
+    modeNameBtn.addEventListener('click', () => {
+      currentMode = 'dish';
+      modeNameBtn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-white text-orange-600 shadow-sm';
+      modeIngBtn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900';
+      dishNameGroup.classList.remove('hidden');
+      ingredientsGroup.classList.add('hidden');
+    });
+
+    modeIngBtn.addEventListener('click', () => {
+      currentMode = 'ingredients';
+      modeIngBtn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-white text-orange-600 shadow-sm';
+      modeNameBtn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900';
+      ingredientsGroup.classList.remove('hidden');
+      dishNameGroup.classList.add('hidden');
+    });
+
+    // Recipe Generation Handler
+    generateBtn.addEventListener('click', async () => {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (!apiKey) {
+        settingsModal.classList.remove('hidden');
+        return;
+      }
+
+      const lang = document.getElementById('langSelect').value;
+      const diet = document.getElementById('dietSelect').value;
+      const spice = document.getElementById('spiceSelect').value;
+      const cookTime = document.getElementById('timeSelect').value;
+
+      let userQuery = '';
+      if (currentMode === 'dish') {
+        const dish = document.getElementById('dishInput').value.trim();
+        if (!dish) {
+          alert('Please enter a dish name.');
+          return;
+        }
+        userQuery = `Generate a complete recipe for dish: "${dish}".`;
+      } else {
+        const ings = document.getElementById('ingInput').value.trim();
+        if (!ings) {
+          alert('Please enter some ingredients.');
+          return;
+        }
+        userQuery = `Suggest and generate a suitable recipe using primarily these ingredients: "${ings}".`;
+      }
+
+      // Construct Prompt
+      const systemInstruction = `You are a culinary expert chef. Generate a detailed, delicious recipe according to the user's constraints.
+Language requirement: Generate the ENTIRE recipe output strictly in ${lang} (If Marathi: use standard Marathi script/Devanagari. If Hindi: use standard Hindi script/Devanagari. If English: standard English).
+
+Output Format structure:
+1. **Recipe Title** (with localized name)
+2. **Short Description** (prep time, cook time, servings, spice level)
+3. **Ingredients List** (with precise measurements)
+4. **Step-by-step Cooking Instructions**
+5. **Chef's Pro Tip** (secret seasoning, technique, or alternative garnish).`;
+
+      const prompt = `${userQuery}
+Preferences:
+- Diet: ${diet}
+- Spice Level: ${spice}
+- Preferred Time: ${cookTime}`;
+
+      // Show loader
+      loadingIndicator.classList.remove('hidden');
+      resultCard.classList.add('hidden');
+      generateBtn.disabled = true;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `${systemInstruction}\n\n${prompt}` }]
+              }
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData?.error?.message || 'Failed to generate recipe.');
+        }
+
+        const data = await response.json();
+        const outputText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!outputText) {
+          throw new Error('No recipe returned. Please retry.');
+        }
+
+        // Render Markdown Output
+        recipeOutput.innerHTML = marked.parse(outputText);
+        resultCard.classList.remove('hidden');
+        lucide.createIcons();
+
+        // Scroll to result
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      } finally {
+        loadingIndicator.classList.add('hidden');
+        generateBtn.disabled = false;
+      }
+    });
+
+    // Copy to Clipboard
+    copyBtn.addEventListener('click', () => {
+      const textToCopy = recipeOutput.innerText;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyText.textContent = 'Copied!';
+        setTimeout(() => {
+          copyText.textContent = 'Copy';
+        }, 2000);
+      });
+    });
+
+    // Init
+    updateKeyStatus();
+  </script>
 </body>
 </html>
