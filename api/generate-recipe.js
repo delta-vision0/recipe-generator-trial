@@ -16,7 +16,7 @@ if (!apiKey) {
     return response.status(500).send('API key is not configured.');  
 }  
 
-const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;  
+const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;  
 
 let userQuery;  
 let systemPrompt;  
