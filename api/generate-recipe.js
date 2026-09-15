@@ -1,66 +1,86 @@
-
 // This is a Vercel Serverless Function
-// It must be placed in a file at /api/generate-recipe.js
+// Path: /api/generate-recipe.js
 
 export default async function handler(request, response) {
-if (request.method !== 'POST') {
-return response.status(405).send('Method Not Allowed');
-}
+  // 1. Only allow POST requests
+  if (request.method !== 'POST') {
+    return response.status(405).send('Method Not Allowed');
+  }
 
-const { isFollowUp, ingredients, query, previousRecipe, language } = request.body;  
+  // 2. Security: Get your API key from Vercel Environment Variables
+  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-// IMPORTANT: Your API key is stored securely as an Environment Variable on Vercel  
-const apiKey = process.env.VITE_GEMINI_API_KEY;  
+  if (!apiKey) {
+    return response.status(500).send('API key is not configured in Vercel.');
+  }
 
-if (!apiKey) {  
-    return response.status(500).send('API key is not configured.');  
-}  
+  // 3. Use Gemini 2.0 Flash (The newest, fastest model available)
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;  
+  const { isFollowUp, ingredients, query, previousRecipe, language = 'English' } = request.body;
 
-let userQuery;  
-let systemPrompt;  
+  let userQuery;
+  let systemPrompt;
 
-if (isFollowUp) {  
-    const previousRecipeJson = JSON.stringify(previousRecipe);  
-    userQuery = `Given the following recipe JSON: ${previousRecipeJson}. Please modify it based on this request: "${query}".`;  
-    systemPrompt = `You are a recipe modification assistant. Your task is to take an existing recipe in JSON format and a user's modification request, then return a *complete, updated recipe* in the exact same JSON structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. Your entire response must be ONLY the updated JSON object. All text must be in ${language}.`;  
-} else {  
-    userQuery = `Generate a recipe using these ingredients: ${ingredients}.`;  
-    systemPrompt = `You are a recipe generation assistant. Your ONLY output must be a single, valid JSON object with this exact structure: {"recipeName": "string", "description": "string", "ingredients": ["string"], "instructions": ["string"]}. All string values inside the JSON must be in ${language}. Do not include any text, markdown, or explanations.`;  
-}  
+  // 4. Set up the logic for new recipes vs. modifications
+  if (isFollowUp) {
+    const previousRecipeJson = JSON.stringify(previousRecipe);
+    userQuery = `Current Recipe: ${previousRecipeJson}. User request to modify: "${query}".`;
+    systemPrompt = `You are a recipe modification assistant. Update the existing recipe based on the user's request. You must output the entire updated recipe in the exact same JSON structure. All text must be in ${language}.`;
+  } else {
+    userQuery = `Generate a recipe using these ingredients: ${ingredients}. If the list is empty, suggest a popular dish.`;
+    systemPrompt = `You are a professional chef. Your ONLY output must be a single, valid JSON object. All string values must be in ${language}.`;
+  }
 
-const payload = {  
-    contents: [{ parts: [{ text: userQuery }] }],  
-    systemInstruction: { parts: [{ text: systemPrompt }] },  
-    generationConfig: { responseMimeType: "application/json" }  
-};  
+  // 5. Construct the payload with Modern "JSON Mode"
+  const payload = {
+    contents: [{ parts: [{ text: userQuery }] }],
+    systemInstruction: { 
+      parts: [{ 
+        text: `${systemPrompt} 
+        Structure: {
+          "recipeName": "string",
+          "description": "string",
+          "ingredients": ["string"],
+          "instructions": ["string"]
+        }` 
+      }] 
+    },
+    generationConfig: {
+      responseMimeType: "application/json" // This forces the AI to return clean JSON (no markdown backticks)
+    }
+  };
 
-try {  
-    const geminiResponse = await fetch(apiUrl, {  
-        method: 'POST',  
-        headers: { 'Content-Type': 'application/json' },  
-        body: JSON.stringify(payload)  
-    });  
+  try {
+    const geminiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-    if (!geminiResponse.ok) {  
-        const errorText = await geminiResponse.text();  
-        console.error("Gemini API Error:", errorText);  
-        return response.status(geminiResponse.status).send(`Gemini API Error: ${errorText}`);  
-    }  
+    const result = await geminiResponse.json();
 
-    const result = await geminiResponse.json();  
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;  
-    if (!text) {  
-        return response.status(500).send('Invalid response structure from Gemini API.');  
-    }  
+    if (!geminiResponse.ok) {
+      console.error("Gemini API Error:", result);
+      return response.status(geminiResponse.status).json(result);
+    }
 
-    const recipeJson = JSON.parse(text);  
-    return response.status(200).json(recipeJson);  
+    // 6. Extract the generated text
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
+      return response.status(500).send('Invalid response structure from Gemini API.');
+    }
 
-} catch (error) {  
-    console.error('Error in serverless function:', error);  
-    return response.status(500).send(`An internal server error occurred: ${error.message}`);  
-}
+    // 7. Parse the text and send the JSON back to the frontend
+    const recipeJson = JSON.parse(text);
+    return response.status(200).json(recipeJson);
 
+  } catch (error) {
+    console.error('Error in serverless function:', error);
+    return response.status(500).json({ 
+      error: 'An internal server error occurred', 
+      details: error.message 
+    });
+  }
 }
